@@ -352,5 +352,8 @@ int main()
 
     freeMemory(words, numWords); // Free the memory allocated for the words array
 
+
+
+
     return 0;
 }
