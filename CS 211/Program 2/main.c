@@ -1,3 +1,4 @@
+
 /*
     Moksh Shah
     CS 211
@@ -238,10 +239,8 @@ int main()
     // srand(time(1)); // Seed the random number generator
     srand(1);
 
-    char **words = NULL;
+    char **words = NULL; // The array of words
     int numWords = 0;    // The number of words in the array
-
-    words = malloc(100000 * sizeof(char *)); // Allocate space for the array of words
 
     printf("Weaver is a game where you try to find a way to get from the starting word to the ending word.\n");
     printf("You can change only one letter at a time, and each word along the way must be a valid word.\n");
@@ -279,31 +278,21 @@ int main()
     {
         if (playAgainChoice == 1) // If the user wants to play again
         {
-
-            startWord = realloc(startWord, (userChoice + 1) * sizeof(char));
-            endWord = realloc(endWord, (userChoice + 1) * sizeof(char));
-
             askUserforInput(startWord, endWord, userChoice, words, numWords, 0);
         }
         else if (playAgainChoice == 2) // If the user wants to change the number of letters in the words and then play again
         {
-            
-            startWord = realloc(startWord, (userChoice + 1) * sizeof(char));
-            endWord = realloc(endWord, (userChoice + 1) * sizeof(char));
-            
-            free(startWord);
-            free(endWord);
+            char **newWords = NULL; // The array of words
+            int newNumWords = 0;    // The number of words in the array
 
             printf("How many letters do you want to have in the words? ");
             scanf("%d", &userChoice);
+            loadFile(filename, &newWords, &newNumWords, userChoice); // Load the file into the array
 
-            loadFile(filename, &words, &numWords, userChoice); // Load the file into the array
-
-            wordsFound = 0;
-
-            for (int i = 0; i < numWords; i++)
+            int wordsFound = 0;
+            for (int i = 0; i < newNumWords; i++)
             {
-                if (strlen(words[i]) == userChoice)
+                if (strlen(newWords[i]) == userChoice)
                 {
                     wordsFound++; // Count the number of words with the user's choice of letters
                 }
@@ -312,8 +301,9 @@ int main()
             printf("Number of %d-letter words found: %d.", userChoice, wordsFound);
 
             printf("\n\n");
+            askUserforInput(startWord, endWord, userChoice, newWords, newNumWords, 0);
 
-            askUserforInput(startWord, endWord, userChoice, words, numWords, 1);
+            free(newWords);
         }
 
         playAgainPrintStaments();
@@ -323,6 +313,8 @@ int main()
     printf("\nThanks for Playing!\n");
     printf("Exiting...\n");
 
+    free(startWord); // Free the memory
+    free(endWord);   // Free the memory
 
     return 0;
 }
