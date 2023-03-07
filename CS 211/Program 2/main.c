@@ -1,4 +1,3 @@
-
 /*
     Moksh Shah
     CS 211
@@ -11,6 +10,7 @@
 #include <time.h>
 
 char *filename = "words.txt"; // The name of the file to open
+char **words = NULL;          // The array of words
 /*
 
 -----------------------------------------
@@ -29,16 +29,40 @@ void loadFile(char *filename, char **words[], int *numWords, int userChoice)
         exit(-1);
     }
 
-    // Read each word from file, and print them one by one
+    // Initialize the number of words to 0
+    *numWords = 0;
+
     char inputString[81];
     while (fscanf(filePtr, "%s", inputString) != EOF)
     {
         if (strlen(inputString) == userChoice)
         {
-            *words = realloc(*words, (*numWords + 1) * sizeof(char *));             // Allocate space for the next word
-            (*words)[*numWords] = malloc((strlen(inputString) + 1) * sizeof(char)); // Allocate space for the characters in the word
-            strcpy((*words)[*numWords], inputString);                               // Copy the word into the array
-            (*numWords)++;                                                          // Increment the number of words
+            (*numWords)++;
+        }
+    }
+
+    *words = (char **)malloc(*numWords * sizeof(char *));
+
+    rewind(filePtr);
+    int i = 0;
+
+    while (fscanf(filePtr, "%s", inputString) != EOF)
+    {
+        if (strlen(inputString) == userChoice)
+        {
+            // *words = realloc(*words, (*numWords + 1) * sizeof(char *));             // Allocate space for the next word
+            // (*words)[*numWords] = malloc((strlen(inputString) + 1) * sizeof(char)); // Allocate space for the characters in the word
+            // strcpy((*words)[*numWords], inputString);                               // Copy the word into the array
+            // (*numWords)++;                                                          // Increment the number of words
+
+            (*words)[i] = (char *)malloc((strlen(inputString) + 1) * sizeof(char));
+            if ((*words)[i] == NULL)
+            {
+                printf("Error: could not allocate memory for word\n");
+                exit(-1);
+            }
+            strcpy((*words)[i], inputString);
+            i++;
         }
     }
 
@@ -131,15 +155,16 @@ int checkOneLetter(char *word, char *nextWord)
 
 */
 
-int guessingGame(char *startWord, char *endWord, char **words, int numWords, int numMoves, int userchoice)
+int guessingGame(char *startWord, char *endWord, char **words, int numWords, int userchoice)
 {
+
     char tempStartWord[100];          // Create a temporary start word
     strcpy(tempStartWord, startWord); // Copy the start word into the temporary start word for later use
 
     printf("\n\nOn each move enter a word of the same length that is at most 1 character different and is also in the dictionary.\n");
     printf("You may also type in 'q' to quit guessing.\n");
 
-    numMoves = 1; // Set the number of moves to 1
+    int numMoves = 1; // Set the number of moves to 1
 
     char *nextWord = malloc((strlen(startWord) + 1) * sizeof(char)); // Allocate space for the next word
 
@@ -228,10 +253,19 @@ int askUserforInput(char *startWord, char *endWord, int userChoice, char **words
         printf("Your starting word is: %s.\n", startWord);
         printf("Your ending word is: %s.\n", endWord);
 
-        guessingGame(startWord, endWord, words, numWords, numMoves, userChoice);
+        guessingGame(startWord, endWord, words, numWords, userChoice);
     }
 
     return 0;
+}
+
+void freeMemory(char **words, int numWords)
+{
+    for (int i = 0; i < numWords; i++)
+    {
+        free(words[i]); // free the memory allocated for each word
+    }
+    free(words); // free the memory allocated for the words array
 }
 
 int main()
@@ -239,8 +273,7 @@ int main()
     // srand(time(1)); // Seed the random number generator
     srand(1);
 
-    char **words = NULL; // The array of words
-    int numWords = 0;    // The number of words in the array
+    int numWords = 0; // The number of words in the array
 
     printf("Weaver is a game where you try to find a way to get from the starting word to the ending word.\n");
     printf("You can change only one letter at a time, and each word along the way must be a valid word.\n");
@@ -282,17 +315,19 @@ int main()
         }
         else if (playAgainChoice == 2) // If the user wants to change the number of letters in the words and then play again
         {
-            char **newWords = NULL; // The array of words
-            int newNumWords = 0;    // The number of words in the array
+            freeMemory(words, numWords); // Free the memory allocated for the words array
+
+            words = NULL;        // The array of words
+            int newNumWords = 0; // The number of words in the array
 
             printf("How many letters do you want to have in the words? ");
             scanf("%d", &userChoice);
-            loadFile(filename, &newWords, &newNumWords, userChoice); // Load the file into the array
+            loadFile(filename, &words, &newNumWords, userChoice); // Load the file into the array
 
             int wordsFound = 0;
             for (int i = 0; i < newNumWords; i++)
             {
-                if (strlen(newWords[i]) == userChoice)
+                if (strlen(words[i]) == userChoice)
                 {
                     wordsFound++; // Count the number of words with the user's choice of letters
                 }
@@ -301,20 +336,21 @@ int main()
             printf("Number of %d-letter words found: %d.", userChoice, wordsFound);
 
             printf("\n\n");
-            askUserforInput(startWord, endWord, userChoice, newWords, newNumWords, 0);
-
-            free(newWords);
+            askUserforInput(startWord, endWord, userChoice, words, newNumWords, 0);
         }
 
         playAgainPrintStaments();
         scanf("%d", &playAgainChoice);
     }
+    
 
     printf("\nThanks for Playing!\n");
     printf("Exiting...\n");
 
     free(startWord); // Free the memory
     free(endWord);   // Free the memory
+
+    freeMemory(words, numWords); // Free the memory allocated for the words array
 
     return 0;
 }
